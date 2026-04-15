@@ -306,7 +306,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--t
     </div>
     <div class="draft-card">
       <div class="draft-label"><span class="field-num">п.9</span><h3>Цель проекта</h3></div>
-      <div class="draft-hint">Проверьте формулу КИЛО: Что + Кого (сколько) + Где + Когда. Лимит: 400 символов.</div>
+      <div class="draft-hint">SMART: конкретно + измеримо (кол-во людей и итог) + достижимо + релевантно + точный срок (месяц и год). Лимит: 400 символов.</div>
       <div class="draft-txt" id="dt-goal"></div>
       <div class="char-counter" id="cc-goal"></div>
     </div>
@@ -544,13 +544,29 @@ async function generate() {
 
     // ===== ЗАПРОС 2: ЧЕК-ЛИСТ =====
     try {
-      const resp2 = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ ...d, action: 'generate_checklist', draft: r, vk: getVK() }) });
-      const json2 = await resp2.json();
+      // небольшая пауза чтобы не упереться в rate limit Groq после черновика
+      await new Promise(res => setTimeout(res, 4000));
+      let json2 = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const resp2 = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ ...d, action: 'generate_checklist', draft: r, vk: getVK() }) });
+          const txt2 = await resp2.text();
+          if (!txt2.trim().startsWith('{')) throw new Error('Сервер вернул не-JSON ответ (попытка ' + attempt + ')');
+          json2 = JSON.parse(txt2);
+          break;
+        } catch(eRetry) {
+          if (attempt === 3) throw eRetry;
+          await new Promise(res => setTimeout(res, 5000));
+          const chkEl = document.getElementById('chk-load-txt');
+          if (chkEl) chkEl.textContent = 'Повторная попытка ' + attempt + '/3…';
+        }
+      }
       clearInterval(itv2);
-      if (json2.ok && json2.data.stages) {
+      if (json2 && json2.ok && json2.data && json2.data.stages) {
         renderStages(json2.data.stages);
       } else {
-        document.getElementById('stages-list').innerHTML = `<div style="color:var(--dng);font-size:13px;padding:1rem">Чек-лист не удалось сгенерировать. Попробуйте обновить страницу.</div>`;
+        const errMsg = json2 && json2.error ? json2.error : 'Попробуйте обновить страницу.';
+        document.getElementById('stages-list').innerHTML = `<div style="color:var(--dng);font-size:13px;padding:1rem">Чек-лист не удалось сгенерировать. ${errMsg}</div>`;
       }
     } catch(e2) {
       clearInterval(itv2);
