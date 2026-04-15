@@ -107,7 +107,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--t
 .cal-table tr:hover td { background: #fafafa; }
 .cal-task-badge { background: var(--teal); color: #fff; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-family: 'Unbounded', sans-serif; white-space: nowrap; }
 .draft-tasks { font-size: 13px; line-height: 2; color: var(--dk); }
-.draft-tasks .task-row { display: flex; gap: 0.5rem; padding: 4px 0; border-bottom: 1px solid var(--bg); }
+.draft-tasks .task-row { display: flex; gap: 0.5rem; padding: 10px 0; border-bottom: 1px solid var(--br); }
 .draft-tasks .task-row:last-child { border-bottom: none; }
 .draft-tasks .task-n { font-family: 'Unbounded', sans-serif; font-size: 10px; background: var(--teal); color: #fff; border-radius: 4px; padding: 2px 7px; flex-shrink: 0; align-self: flex-start; margin-top: 3px; }
 .draft-tasks .task-t { flex: 1; }
@@ -350,7 +350,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--t
   </div>
 
   <div class="footer" style="margin-top:1.5rem">
-    <a href="https://грантыглавы102.рф" target="_blank">грантыглавы102.рф</a> · Автор: <a href="https://vk.com/ignat_k" target="_blank">Кирилл Игнатьев</a>
+    Сайт конкурса: <a href="https://грантыглавы102.рф" target="_blank">грантыглавы102.рф</a> · Автор: <a href="https://vk.com/ignat_k" target="_blank">Кирилл Игнатьев</a>
   </div>
 </div>
 </div>
@@ -494,7 +494,7 @@ async function generate() {
     document.getElementById('res-s').textContent = `Черновик сгенерирован · Осталось генераций: ${left}`;
 
     const fields = [
-      { id: 'dt-short', cc: 'cc-short', val: r.short_desc,        lim: 600  },
+      { id: 'dt-short', cc: 'cc-short', val: r.short_desc,        lim: 1000 },
       { id: 'dt-tg',    cc: 'cc-tg',    val: r.target_group,      lim: 400  },
       { id: 'dt-prob',  cc: 'cc-prob',  val: r.problem,           lim: 1500 },
       { id: 'dt-goal',  cc: 'cc-goal',  val: r.goal,              lim: 400  },
