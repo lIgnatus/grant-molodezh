@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Конструктор заявки — Молодёжные проекты | Фонд грантов Главы РБ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600&family=Unbounded:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --teal: #0d6e56; --tl: #1a9070; --tp: #e1f5ee; --td: #0a5240;
+  --dk: #111; --md: #444; --mu: #777;
+  --br: #ddd; --bg: #f5f7f5; --wh: #fff;
+  --dng: #c0392b; --wbg: #fff8e6; --wb: #e8a020;
+  --obg: #eafaf4; --ob: #27ae80; --ibg: #eaf3fb; --ib: #3498db;
+  --r: 10px; --rl: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Geologica', sans-serif; background: var(--bg); color: var(--dk); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+.topbar { background: var(--teal); padding: 0 1.5rem; display: flex; align-items: center; gap: 0.75rem; height: 54px; position: sticky; top: 0; z-index: 100; }
+.tb-logo { width: 32px; height: 32px; background: rgba(255,255,255,.18); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.tb-t { font-family: 'Unbounded', sans-serif; font-size: 10px; color: rgba(255,255,255,.92); letter-spacing: 0.02em; line-height: 1.4; }
+.tb-sub { font-size: 10px; color: rgba(255,255,255,.5); margin-top: 1px; }
+.tb-badge { margin-left: auto; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: 3px 10px; font-size: 10px; color: rgba(255,255,255,.8); white-space: nowrap; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.hero { background: var(--teal); color: #fff; padding: 1.75rem; border-radius: var(--rl); margin-bottom: 1.25rem; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; right: -50px; top: -50px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.05); }
+.hero h1 { font-family: 'Unbounded', sans-serif; font-size: clamp(15px, 2.5vw, 20px); font-weight: 600; line-height: 1.35; margin-bottom: 0.5rem; position: relative; }
+.hero p { font-size: 13px; color: rgba(255,255,255,.8); max-width: 540px; line-height: 1.7; position: relative; }
+.hero-chips { display: flex; gap: 5px; margin-top: 1rem; flex-wrap: wrap; position: relative; }
+.chip { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: rgba(255,255,255,.88); }
+.card { background: var(--wh); border-radius: var(--rl); border: 1px solid var(--br); padding: 1.5rem; margin-bottom: 1.25rem; }
+.card-t { font-family: 'Unbounded', sans-serif; font-size: 12px; color: var(--teal); margin-bottom: 0.25rem; font-weight: 600; }
+.card-sub { font-size: 12px; color: var(--mu); margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--bg); }
+.field { margin-bottom: 1rem; }
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media(max-width: 560px) { .frow { grid-template-columns: 1fr; } }
+label { display: block; font-size: 13px; font-weight: 500; color: var(--dk); margin-bottom: 4px; }
+.hint { font-size: 12px; color: var(--md); margin-bottom: 6px; line-height: 1.5; padding: 6px 10px; background: var(--tp); border-left: 3px solid var(--tl); border-radius: 0 5px 5px 0; }
+input[type=text], input[type=number], textarea, select {
+  width: 100%; border: 1px solid var(--br); border-radius: var(--r); padding: 9px 12px;
+  font-size: 13px; font-family: 'Geologica', sans-serif; color: var(--dk); background: var(--wh);
+  transition: border-color 0.15s; -webkit-appearance: none; appearance: none;
+}
+textarea { resize: vertical; min-height: 92px; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13,110,86,.08); }
+.cc { font-size: 11px; color: var(--mu); text-align: right; margin-top: 2px; }
+.cc.over { color: var(--dng); }
+.btn-row { display: flex; gap: 8px; justify-content: flex-end; align-items: center; padding-top: 0.875rem; border-top: 1px solid var(--bg); }
+.btn { padding: 8px 18px; border-radius: var(--r); border: 1px solid var(--br); font-size: 13px; font-family: 'Geologica', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.15s; background: var(--wh); color: var(--dk); }
+.btn:hover { background: var(--bg); }
+.btn-p { background: var(--teal); color: #fff; border-color: var(--teal); padding: 8px 24px; }
+.btn-p:hover { background: var(--td); border-color: var(--td); }
+.btn-p:disabled { opacity: 0.6; cursor: not-allowed; }
+#result-page { display: none; }
+.load-card { background: var(--wh); border: 1px solid var(--br); border-radius: var(--rl); padding: 2.5rem 1.5rem; text-align: center; margin-bottom: 1.25rem; }
+.spinner { width: 36px; height: 36px; border: 3px solid var(--tp); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 0.75rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.load-txt { font-size: 13px; color: var(--mu); }
+.res-header { background: var(--teal); color: #fff; padding: 1.25rem 1.5rem; border-radius: var(--rl); margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 0.875rem; flex-wrap: wrap; }
+.res-header h2 { font-family: 'Unbounded', sans-serif; font-size: 14px; font-weight: 600; }
+.res-header p { font-size: 12px; color: rgba(255,255,255,.7); margin-top: 2px; }
+.res-acts { display: flex; gap: 6px; }
+.btn-w { background: #fff; color: var(--teal); border: none; border-radius: var(--r); padding: 7px 14px; font-size: 12px; font-family: 'Geologica', sans-serif; font-weight: 500; cursor: pointer; }
+.btn-w:hover { opacity: 0.9; }
+.tabs { display: flex; gap: 0; background: var(--wh); border: 1px solid var(--br); border-radius: var(--rl); overflow: hidden; margin-bottom: 1.25rem; }
+.tab { flex: 1; padding: 0.75rem 1rem; font-size: 12px; font-family: 'Geologica', sans-serif; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--mu); transition: all 0.15s; text-align: center; border-bottom: 2px solid transparent; }
+.tab.active { color: var(--teal); border-bottom-color: var(--teal); background: var(--tp); }
+.tab:hover:not(.active) { background: var(--bg); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.draft-card { background: var(--wh); border: 1px solid var(--br); border-radius: var(--rl); padding: 1.5rem; margin-bottom: 1rem; }
+.draft-label { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.draft-label .field-num { font-size: 10px; background: var(--teal); color: #fff; border-radius: 4px; padding: 2px 7px; font-family: 'Unbounded', sans-serif; font-weight: 600; }
+.draft-label h3 { font-family: 'Unbounded', sans-serif; font-size: 11px; color: var(--dk); text-transform: uppercase; letter-spacing: 0.04em; }
+.draft-hint { font-size: 11px; color: var(--mu); margin-bottom: 0.625rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--bg); line-height: 1.5; }
+.draft-txt { font-size: 13px; line-height: 1.8; color: var(--dk); white-space: pre-wrap; }
+.char-counter { font-size: 11px; margin-top: 6px; text-align: right; padding: 3px 8px; border-radius: 4px; }
+.char-counter.ok { color: var(--ob); background: var(--obg); }
+.char-counter.warn { color: #7a4a00; background: var(--wbg); }
+.char-counter.over { color: var(--dng); background: #fdecea; }
+.stages-header { background: var(--wh); border: 1px solid var(--br); border-radius: var(--rl); padding: 1rem 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.stages-header h3 { font-family: 'Unbounded', sans-serif; font-size: 13px; color: var(--dk); }
+.stage-progress { display: flex; align-items: center; gap: 0.625rem; }
+.sp-bar { width: 140px; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.sp-fill { height: 100%; background: var(--teal); border-radius: 3px; transition: width 0.4s ease; }
+.sp-lbl { font-size: 12px; color: var(--mu); white-space: nowrap; }
+.sp-lbl b { color: var(--teal); }
+.stage-card { background: var(--wh); border: 1px solid var(--br); border-radius: var(--rl); margin-bottom: 0.875rem; overflow: hidden; }
+.stage-head { display: flex; align-items: center; gap: 0.875rem; padding: 1rem 1.5rem; cursor: pointer; user-select: none; }
+.stage-head:hover { background: #fafafa; }
+.stage-num { width: 32px; height: 32px; border-radius: 50%; background: var(--teal); color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Unbounded', sans-serif; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.stage-num.done { background: var(--ob); }
+.stage-info { flex: 1; }
+.stage-name { font-family: 'Unbounded', sans-serif; font-size: 11px; color: var(--dk); font-weight: 600; }
+.stage-meta { font-size: 11px; color: var(--mu); margin-top: 2px; }
+.stage-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--tp); color: var(--teal); font-weight: 600; white-space: nowrap; }
+.stage-toggle { font-size: 16px; color: var(--mu); transition: transform 0.2s; }
+.stage-toggle.open { transform: rotate(180deg); }
+.stage-body { padding: 0 1.5rem 1.25rem; border-top: 1px solid var(--bg); }
+.stage-content { font-size: 13px; color: var(--dk); line-height: 1.7; padding-top: 1rem; white-space: pre-wrap; }
+.task-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.625rem 0; border-bottom: 1px solid #f5f5f5; }
+.task-item:last-child { border-bottom: none; }
+.task-cb { width: 20px; height: 20px; border: 2px solid var(--br); border-radius: 5px; cursor: pointer; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.task-cb.checked { background: var(--teal); border-color: var(--teal); }
+.task-cb.checked::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+.task-text { flex: 1; }
+.task-main { font-size: 13px; color: var(--dk); line-height: 1.5; font-weight: 500; }
+.task-detail { font-size: 12px; color: var(--mu); margin-top: 3px; line-height: 1.5; }
+.task-item.checked-item .task-main { text-decoration: line-through; color: var(--mu); }
+.footer { text-align: center; font-size: 11px; color: var(--mu); margin-top: 2rem; line-height: 1.7; }
+.footer a { color: var(--teal); text-decoration: none; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--wh); border-radius: var(--rl); padding: 2rem 1.75rem; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.modal-icon { width: 48px; height: 48px; background: var(--tp); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 1rem; }
+.modal h2 { font-family: 'Unbounded', sans-serif; font-size: 15px; margin-bottom: 0.5rem; }
+.modal p { font-size: 13px; color: var(--mu); margin-bottom: 1.25rem; line-height: 1.6; }
+.modal .field { margin-bottom: 1rem; }
+.modal-err { font-size: 12px; color: var(--dng); margin-top: -0.5rem; margin-bottom: 0.75rem; display: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-logo">🛠</div>
+  <div>
+    <div class="tb-t">Конструктор грантов</div>
+    <div class="tb-sub">Конкурс молодёжных проектов Фонда Главы РБ</div>
+  </div>
+  <div class="tb-badge"><a href="https://vk.com/ignat_k" target="_blank" style="color:inherit;text-decoration:none">vk.com/ignat_k</a></div>
+</div>
+
+<!-- МОДАЛ РЕГИСТРАЦИИ -->
+<div class="modal-overlay" id="reg-modal">
+  <div class="modal">
+    <div class="modal-icon">🔗</div>
+    <h2>Укажите страницу ВКонтакте</h2>
+    <p>Чтобы получить 2 бесплатные генерации — укажите вашу страницу ВКонтакте. Мы свяжемся если сможем помочь с грантом.</p>
+    <div class="field">
+      <label>Ваш ВКонтакте *</label>
+      <div class="hint" style="margin-bottom:8px">Можно в любом формате — распознаем автоматически.<br>Примеры: <b>ignat_k</b> &nbsp;·&nbsp; <b>@ignat_k</b> &nbsp;·&nbsp; <b>vk.com/ignat_k</b></div>
+      <input type="text" id="reg-vk" placeholder="ignat_k" oninput="clearRegErr()">
+    </div>
+    <div class="modal-err" id="reg-err">Введите корректную ссылку ВКонтакте</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-p" style="flex:1" id="reg-btn" onclick="submitReg()">Продолжить →</button>
+    </div>
+    <p style="font-size:11px;color:var(--mu);margin-top:0.875rem;margin-bottom:0">Мы не публикуем данные и не рассылаем спам. Только для связи по вашему проекту.</p>
+  </div>
+</div>
+
+<!-- ФОРМА -->
+<div id="form-page">
+<div id="reg-status-bar" style="text-align:center;font-size:12px;padding:7px 1rem;transition:all 0.3s"></div>
+<div class="wrap">
+  <div class="hero">
+    <h1>Конструктор грантов</h1>
+    <p>Опишите идею своими словами — ИИ сгенерирует черновик заявки по всем разделам и пошаговый чек-лист для её доработки.</p>
+    <p style="margin-top:0.625rem;font-size:12px;color:rgba(255,255,255,.65)">Сгенерированные тексты — черновик для доработки. Перед подачей изучите положение на <a href="https://грантыглавы102.рф" target="_blank" style="color:rgba(255,255,255,.85)">грантыглавы102.рф</a></p>
+    <div class="hero-chips">
+      <span class="chip">Молодёжь 14–35 лет</span>
+      <span class="chip">Черновик за 30 сек</span>
+      <span class="chip">Чек-лист доработки</span>
+      <span class="chip">Скачать PDF</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-t">О проекте</div>
+    <div class="card-sub">Заполните 4 поля — ИИ сгенерирует черновик всей заявки</div>
+
+    <div class="field">
+      <label>Тематическое направление конкурса *</label>
+      <div class="hint">Выберите направление из положения о конкурсе — это определяет критерии оценки вашей заявки.</div>
+      <select id="f-direction">
+        <option value="">— Выберите направление —</option>
+        <optgroup label="В сфере молодёжной политики">
+          <option value="1. Патриотическое и духовно-нравственное воспитание, укрепление гражданской идентичности молодёжи">1. Патриотическое и духовно-нравственное воспитание</option>
+          <option value="2. Профилактика экстремизма, терроризма и правонарушений, гармонизация межнациональных отношений">2. Профилактика экстремизма и правонарушений</option>
+          <option value="3. Правовое просвещение, защита прав и законных интересов молодёжи">3. Правовое просвещение, защита прав молодёжи</option>
+          <option value="4. Поддержка молодых граждан в ТЖС, инвалидов, детей-сирот, инклюзивные проекты">4. Поддержка молодёжи в трудной жизненной ситуации, инклюзия</option>
+          <option value="5. Развитие добровольчества и института наставничества">5. Добровольчество и наставничество</option>
+          <option value="6. Поддержка молодёжных объединений, развитие молодёжного самоуправления">6. Молодёжные объединения и самоуправление</option>
+          <option value="7. Формирование ЗОЖ, развитие массового спорта, туризма и экологической культуры">7. ЗОЖ, спорт, туризм, экология</option>
+          <option value="8. Организация досуга молодёжи: форумы, слёты, фестивали и иные мероприятия">8. Организация досуга, форумы, фестивали</option>
+          <option value="9. Поддержка молодых семей, сохранение традиционных семейных ценностей">9. Молодые семьи и семейные ценности</option>
+          <option value="10. Содействие образованию, науке, поддержка талантливой и одарённой молодёжи">10. Образование, наука, поддержка талантливой молодёжи</option>
+          <option value="11. Содействие трудоустройству, занятости, молодёжное предпринимательство">11. Трудоустройство и молодёжное предпринимательство</option>
+          <option value="12. Вовлечение молодёжи в развитие сельских территорий, повышение привлекательности села">12. Развитие сельских территорий</option>
+          <option value="13. Поддержка молодёжных медиа, создание социально значимого контента">13. Молодёжные медиа и социально значимый контент</option>
+        </optgroup>
+        <optgroup label="Популяризация РБ (для студентов за пределами РБ)">
+          <option value="Поддержка и развитие землячеств Республики Башкортостан на территории РФ">14. Поддержка землячеств РБ</option>
+          <option value="Популяризация и сохранение культуры и башкирского языка за пределами РБ">15. Популяризация культуры и башкирского языка</option>
+          <option value="Проекты на укрепление единства, дружбы народов и межнационального согласия">16. Укрепление единства и дружбы народов</option>
+          <option value="Социальная поддержка отдельных категорий граждан (вне РБ)">17. Социальная поддержка граждан вне РБ</option>
+          <option value="Пропаганда ЗОЖ, физической культуры и спорта (вне РБ)">18. Пропаганда ЗОЖ и спорта вне РБ</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Название проекта *</label>
+      <div class="hint">Коротко и ёмко, без кавычек, с заглавной буквы.</div>
+      <input type="text" id="f-name" maxlength="200" oninput="cc(this,'cn',200)" placeholder="Школа волонтёров Уфы">
+      <div class="cc" id="cn">0 / 200</div>
+    </div>
+
+    <div class="field">
+      <label>Идея проекта своими словами *</label>
+      <div class="hint">Что хотите сделать, для кого, зачем. Пишите свободно — ИИ сам оформит по требованиям фонда.</div>
+      <textarea id="f-sum" maxlength="2000" oninput="cc(this,'cs',2000)" rows="5" placeholder="Хочу создать школу волонтёров для молодёжи Уфы 18–25 лет. Научить их помогать пожилым людям и детям из детских домов. Провести несколько волонтёрских акций летом. Создать активное сообщество в соцсетях."></textarea>
+      <div class="cc" id="cs">0 / 2000</div>
+    </div>
+
+    <div class="frow">
+      <div class="field">
+        <label>География *</label>
+        <input type="text" id="f-geo" placeholder="г. Уфа, Октябрьский район">
+      </div>
+      <div class="field">
+        <label>Срок (месяцев)</label>
+        <input type="number" id="f-dur" min="1" max="12" value="6" style="max-width:120px">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-p" id="gen-btn" onclick="generate()">Сгенерировать черновик ↗</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    Официальный сайт конкурса: <a href="https://грантыглавы102.рф" target="_blank">грантыглавы102.рф</a><br>
+    Автор: <a href="https://vk.com/ignat_k" target="_blank">Кирилл Игнатьев</a>
+  </div>
+</div>
+</div>
+
+<!-- РЕЗУЛЬТАТ -->
+<div id="result-page">
+<div class="wrap">
+  <div class="res-header">
+    <div>
+      <h2 id="res-t">Черновик готов</h2>
+      <p id="res-s">Используйте для доработки перед подачей на грантыглавы102.рф</p>
+    </div>
+    <div class="res-acts">
+      <button class="btn-w" onclick="exportPDF()">Скачать PDF</button>
+      <button class="btn-w" onclick="backToForm()">← Изменить</button>
+    </div>
+  </div>
+
+  <div class="load-card" id="load-card">
+    <div class="spinner"></div>
+    <div class="load-txt" id="load-txt">Генерируем черновик по методике фонда…</div>
+  </div>
+
+  <div id="main-sec" style="display:none">
+    <!-- Табы -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('draft')">Черновик заявки</button>
+      <button class="tab" onclick="switchTab('checklist')">Чек-лист доработки</button>
+    </div>
+
+    <!-- Черновик -->
+    <div id="tab-draft" class="tab-panel active">
+      <div class="draft-card">
+        <div class="draft-label"><span class="field-num">п.3</span><h3>Краткое описание проекта</h3></div>
+        <div class="draft-hint">Публичное поле — именно его увидят эксперты первым. Проверьте на ошибки и точность. Лимит: 600 символов.</div>
+        <div class="draft-txt" id="dt-short"></div>
+        <div class="char-counter" id="cc-short"></div>
+      </div>
+      <div class="draft-card">
+        <div class="draft-label"><span class="field-num">п.6</span><h3>Целевые группы (14–35 лет)</h3></div>
+        <div class="draft-hint">Укажите конкретный возраст, статус, территорию и количество человек. Лимит: 400 символов.</div>
+        <div class="draft-txt" id="dt-tg"></div>
+        <div class="char-counter" id="cc-tg"></div>
+      </div>
+      <div class="draft-card">
+        <div class="draft-label"><span class="field-num">п.7</span><h3>Проблема и социальная значимость</h3></div>
+        <div class="draft-hint">Подкрепите официальной статистикой и результатами опросов перед подачей. Лимит: 1500 символов.</div>
+        <div class="draft-txt" id="dt-prob"></div>
+        <div class="char-counter" id="cc-prob"></div>
+      </div>
+      <div class="draft-card">
+        <div class="draft-label"><span class="field-num">п.9</span><h3>Цель проекта</h3></div>
+        <div class="draft-hint">Проверьте формулу КИЛО: Что + Кого (сколько) + Где + Когда. Лимит: 400 символов.</div>
+        <div class="draft-txt" id="dt-goal"></div>
+        <div class="char-counter" id="cc-goal"></div>
+      </div>
+      <div class="draft-card">
+        <div class="draft-label"><span class="field-num">п.10</span><h3>Задачи проекта</h3></div>
+        <div class="draft-hint">Каждая задача устраняет одну причину проблемы. Минимум 2 мероприятия на задачу. Лимит: 300 символов.</div>
+        <div class="draft-txt" id="dt-tasks"></div>
+        <div class="char-counter" id="cc-tasks"></div>
+      </div>
+      <div class="draft-card">
+        <div class="draft-label"><span class="field-num">КП</span><h3>Краткий календарный план</h3></div>
+        <div class="draft-hint">Детализируйте: конкретные даты, форматы (очно/онлайн), число участников каждого мероприятия. Лимит: 1000 символов.</div>
+        <div class="draft-txt" id="dt-calendar"></div>
+        <div class="char-counter" id="cc-calendar"></div>
+      </div>
+      <div class="draft-card">
+        <div class="draft-label"><span class="field-num">п.14</span><h3>Количественные результаты</h3></div>
+        <div class="draft-hint">Сумма участников всех мероприятий должна совпадать с итоговыми числами. Лимит: 300 символов.</div>
+        <div class="draft-txt" id="dt-rq"></div>
+        <div class="char-counter" id="cc-rq"></div>
+      </div>
+      <div class="draft-card">
+        <div class="draft-label"><span class="field-num">п.15</span><h3>Качественные результаты</h3></div>
+        <div class="draft-hint">Что изменится в жизни участников? Конкретные навыки, знания, социальный эффект. Лимит: 500 символов.</div>
+        <div class="draft-txt" id="dt-rql"></div>
+        <div class="char-counter" id="cc-rql"></div>
+      </div>
+    </div>
+
+    <!-- Чек-лист -->
+    <div id="tab-checklist" class="tab-panel">
+      <div class="stages-header">
+        <h3>Чек-лист доработки заявки</h3>
+        <div class="stage-meta" style="font-size:12px;color:var(--mu)">4 раздела · индивидуально под ваш проект</div>
+      </div>
+      <div id="stages-list"></div>
+    </div>
+  </div>
+
+  <div style="background:var(--tp);border:1px solid var(--tl);border-radius:var(--rl);padding:1.25rem 1.5rem;margin-top:0.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+    <div style="font-size:22px">💬</div>
+    <div style="flex:1">
+      <div style="font-family:'Unbounded',sans-serif;font-size:12px;color:var(--teal);font-weight:600;margin-bottom:3px">Нужна помощь с доработкой?</div>
+      <div style="font-size:13px;color:var(--md);line-height:1.6">Черновик — это старт. Если нужна помощь с доработкой заявки, бюджетом или стратегией — напишите напрямую.</div>
+    </div>
+    <a href="https://vk.com/ignat_k" target="_blank" style="background:var(--teal);color:#fff;text-decoration:none;padding:9px 20px;border-radius:var(--r);font-size:13px;font-family:'Geologica',sans-serif;font-weight:500;white-space:nowrap">Написать Кириллу →</a>
+  </div>
+
+  <div class="footer" style="margin-top:1.5rem">
+    <a href="https://грантыглавы102.рф" target="_blank">грантыглавы102.рф</a> · Автор: <a href="https://vk.com/ignat_k" target="_blank">Кирилл Игнатьев</a>
+  </div>
+</div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwPK426Z9BGnOQZuscQ9JesXKTImVcyAV4VuJdxPQ6_IJMO766-iPpNSjyKBcvuyyiB/exec';
+const MAX_GENS = 2;
+let lastData = {};
+let pendingGenerate = false;
+window.addEventListener('DOMContentLoaded', updateRegStatus);
+
+function isRegistered() {
+  return !!localStorage.getItem('grant_vk');
+}
+
+function getVK() {
+  return localStorage.getItem('grant_vk') || '';
+}
+
+function updateRegStatus() {
+  const bar = document.getElementById('reg-status-bar');
+  if (!bar) return;
+  const vk = getVK();
+  const gens = parseInt(localStorage.getItem('grantai_gens') || '0');
+  const left = Math.max(0, MAX_GENS - gens);
+  if (vk) {
+    bar.style.background = '#e1f5ee';
+    bar.style.color = '#0a5240';
+    bar.style.borderBottom = '1px solid #a8ddc8';
+    bar.innerHTML = `✓ Вы зарегистрированы как <b>${vk}</b> · Осталось генераций: <b>${left}</b>`;
+  } else {
+    bar.style.background = '#f5f7f5';
+    bar.style.color = '#777';
+    bar.style.borderBottom = '1px solid #ddd';
+    bar.innerHTML = `Вы не зарегистрированы · Укажите ВКонтакте чтобы получить <b>2 бесплатные генерации</b>`;
+  }
+}
+
+function clearRegErr() {
+  document.getElementById('reg-err').style.display = 'none';
+  // автоматически убираем @ если пользователь его вбил
+  const el = document.getElementById('reg-vk');
+  if (el.value.startsWith('@')) el.value = el.value.slice(1);
+}
+
+async function submitReg() {
+  const raw = document.getElementById('reg-vk').value.trim();
+  if (!raw || raw.length < 5) {
+    document.getElementById('reg-err').style.display = 'block';
+    return;
+  }
+  const vk = raw.replace(/^https?:\/\//, '').replace(/^vk\.com\//, 'vk.com/');
+  const normalized = vk.startsWith('vk.com/') ? vk : 'vk.com/' + vk;
+
+  const btn = document.getElementById('reg-btn');
+  btn.disabled = true;
+  btn.textContent = 'Сохраняем…';
+
+  try {
+    await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'register', vk: normalized, geo: document.getElementById('f-geo').value })
+    });
+  } catch(e) { /* не критично */ }
+
+  localStorage.setItem('grant_vk', normalized);
+  localStorage.setItem('grantai_gens', '0');
+  document.getElementById('reg-modal').classList.remove('open');
+  btn.disabled = false;
+  btn.textContent = 'Продолжить →';
+  updateRegStatus();
+
+  if (pendingGenerate) {
+    pendingGenerate = false;
+    generate();
+  }
+}
+
+function cc(el, id, max) {
+  const n = el.value.length, c = document.getElementById(id);
+  c.textContent = n + ' / ' + max;
+  c.className = 'cc' + (n > max ? ' over' : '');
+}
+
+function D() {
+  return {
+    direction: document.getElementById('f-direction').value,
+    name: document.getElementById('f-name').value,
+    sum: document.getElementById('f-sum').value,
+    geo: document.getElementById('f-geo').value,
+    dur: document.getElementById('f-dur').value
+  };
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+async function generate() {
+  const d = D();
+  if (!d.direction) { alert('Выберите тематическое направление'); return; }
+  if (!d.name.trim()) { alert('Введите название проекта'); return; }
+  if (!d.sum.trim()) { alert('Опишите идею проекта'); return; }
+  if (!d.geo.trim()) { alert('Укажите географию'); return; }
+
+  if (!isRegistered()) {
+    pendingGenerate = true;
+    document.getElementById('reg-modal').classList.add('open');
+    return;
+  }
+
+  const used = parseInt(localStorage.getItem('grantai_gens') || '0');
+  if (used >= MAX_GENS) {
+    alert(`Вы использовали все ${MAX_GENS} бесплатные генерации.\n\nЧтобы получить больше — напишите автору: vk.com/ignat_k`);
+    return;
+  }
+
+  lastData = d;
+  document.getElementById('form-page').style.display = 'none';
+  document.getElementById('result-page').style.display = 'block';
+  document.getElementById('load-card').style.display = 'block';
+  document.getElementById('main-sec').style.display = 'none';
+  document.getElementById('gen-btn').disabled = true;
+  window.scrollTo(0, 0);
+
+  const msgs = [
+    'Генерируем черновик по методике фонда…',
+    'Анализируем проект по критериям оценки…',
+    'Составляем чек-лист доработки…',
+    'Формируем задачи и календарный план…'
+  ];
+  let li = 0;
+  const itv = setInterval(() => {
+    li = (li + 1) % msgs.length;
+    document.getElementById('load-txt').textContent = msgs[li];
+  }, 1800);
+
+  try {
+    const resp = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ ...d, vk: getVK() }) });
+    const json = await resp.json();
+    if (!json.ok) throw new Error(json.error || 'Ошибка сервера');
+    const r = json.data;
+
+    clearInterval(itv);
+    localStorage.setItem('grantai_gens', String(used + 1));
+    const left = MAX_GENS - (used + 1);
+    document.getElementById('res-t').textContent = d.name || 'Черновик готов';
+    document.getElementById('res-s').textContent = `Черновик сгенерирован · Осталось генераций: ${left}`;
+
+    const fields = [
+      { id: 'dt-short', cc: 'cc-short', val: r.short_desc,        lim: 600  },
+      { id: 'dt-tg',    cc: 'cc-tg',    val: r.target_group,      lim: 400  },
+      { id: 'dt-prob',  cc: 'cc-prob',  val: r.problem,           lim: 1500 },
+      { id: 'dt-goal',  cc: 'cc-goal',  val: r.goal,              lim: 400  },
+      { id: 'dt-tasks', cc: 'cc-tasks', val: r.tasks,             lim: 300  },
+      { id: 'dt-calendar', cc: 'cc-calendar', val: r.calendar,    lim: 1000 },
+      { id: 'dt-rq',    cc: 'cc-rq',    val: r.results_quantity,  lim: 300  },
+      { id: 'dt-rql',   cc: 'cc-rql',   val: r.results_quality,   lim: 500  }
+    ];
+    fields.forEach(f => {
+      const txt = f.val || '';
+      document.getElementById(f.id).textContent = txt;
+      const n = txt.length;
+      const el = document.getElementById(f.cc);
+      if (el) {
+        el.textContent = n + ' / ' + f.lim + ' символов';
+        const ratio = n / f.lim;
+        el.className = 'char-counter ' + (n > f.lim ? 'over' : ratio >= 0.85 ? 'ok' : ratio >= 0.6 ? 'warn' : 'over');
+      }
+    });
+
+    document.getElementById('load-card').style.display = 'none';
+    document.getElementById('main-sec').style.display = 'block';
+
+    if (r.stages) renderStages(r.stages);
+  } catch (e) {
+    clearInterval(itv);
+    document.getElementById('load-card').innerHTML = `<div style="color:var(--dng);font-size:13px;text-align:center">Ошибка: ${e.message}<br><br><button class="btn btn-p" onclick="backToForm()">← Назад</button></div>`;
+  } finally {
+    document.getElementById('gen-btn').disabled = false;
+  }
+}
+
+function renderStages(stages) {
+  const container = document.getElementById('stages-list');
+  container.innerHTML = '';
+  stages.forEach((stage, si) => {
+    const card = document.createElement('div');
+    card.className = 'stage-card';
+    card.id = 'stage-' + si;
+    card.innerHTML = `
+      <div class="stage-head" onclick="toggleStage(${si})">
+        <div class="stage-num" id="snum-${si}">${si + 1}</div>
+        <div class="stage-info">
+          <div class="stage-name">${stage.name}</div>
+        </div>
+        <div class="stage-toggle" id="stoggle-${si}">▼</div>
+      </div>
+      <div class="stage-body" id="sbody-${si}" style="display:none">
+        <div class="stage-content">${stage.content || ''}</div>
+      </div>`;
+    container.appendChild(card);
+    if (si === 0) toggleStage(si);
+  });
+}
+
+function toggleStage(si) {
+  const body = document.getElementById('sbody-' + si);
+  const toggle = document.getElementById('stoggle-' + si);
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  toggle.className = 'stage-toggle' + (isOpen ? '' : ' open');
+}
+
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const d = lastData, M = 20, W = 170;
+  let y = 34;
+
+  doc.setFillColor(13, 110, 86);
+  doc.rect(0, 0, 210, 27, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+  doc.text('Черновик заявки — Фонд грантов Главы Республики Башкортостан', M, 11);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  doc.text((d.name || 'Без названия') + (d.geo ? ' · ' + d.geo : ''), M, 20);
+  doc.setTextColor(0, 0, 0);
+
+  const sec = (label, id) => {
+    const tx = document.getElementById(id)?.textContent || '';
+    if (!tx.trim()) return;
+    if (y > 255) { doc.addPage(); y = 20; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+    doc.text(label, M, y); y += 6;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    doc.splitTextToSize(tx, W).forEach(l => {
+      if (y > 280) { doc.addPage(); y = 20; }
+      doc.text(l, M, y); y += 4.5;
+    });
+    y += 5;
+  };
+
+  sec('п.3 Краткое описание', 'dt-short');
+  sec('п.6 Целевые группы', 'dt-tg');
+  sec('п.7 Проблема и социальная значимость', 'dt-prob');
+  sec('п.9 Цель проекта', 'dt-goal');
+  sec('п.10 Задачи проекта', 'dt-tasks');
+  sec('Краткий календарный план', 'dt-calendar');
+  sec('п.14 Количественные результаты', 'dt-rq');
+  sec('п.15 Качественные результаты', 'dt-rql');
+
+  // Чек-лист доработки
+  const stages = document.querySelectorAll('#stages-list .stage-card');
+  if (stages.length > 0) {
+    doc.addPage(); y = 20;
+    doc.setFillColor(13, 110, 86);
+    doc.rect(0, 0, 210, 14, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+    doc.text('Чек-лист доработки заявки', M, 9);
+    doc.setTextColor(0, 0, 0);
+    y = 24;
+    stages.forEach((card, i) => {
+      const name = card.querySelector('.stage-name')?.textContent || '';
+      const content = card.querySelector('.stage-content')?.textContent || '';
+      if (!content.trim()) return;
+      if (y > 255) { doc.addPage(); y = 20; }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+      doc.text((i + 1) + '. ' + name, M, y); y += 6;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.splitTextToSize(content, W).forEach(l => {
+        if (y > 280) { doc.addPage(); y = 20; }
+        doc.text(l, M, y); y += 4.5;
+      });
+      y += 6;
+    });
+  }
+
+  doc.save('grant-' + (d.name || 'proekt').replace(/\s+/g, '-').toLowerCase().substring(0, 25) + '.pdf');
+}
+
+function backToForm() {
+  document.getElementById('result-page').style.display = 'none';
+  document.getElementById('form-page').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>
