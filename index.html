@@ -100,6 +100,12 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--t
 .stage-toggle.open { transform: rotate(180deg); }
 .stage-body { padding: 0 1.5rem 1.25rem; border-top: 1px solid var(--bg); }
 .stage-content { font-size: 13px; color: var(--dk); line-height: 1.7; padding-top: 1rem; white-space: pre-wrap; }
+.cal-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 0.5rem; }
+.cal-table th { background: var(--teal); color: #fff; padding: 7px 10px; text-align: left; font-family: 'Unbounded', sans-serif; font-size: 10px; font-weight: 600; }
+.cal-table td { padding: 7px 10px; border-bottom: 1px solid var(--bg); vertical-align: top; line-height: 1.5; }
+.cal-table tr:last-child td { border-bottom: none; }
+.cal-table tr:hover td { background: #fafafa; }
+.cal-task-badge { background: var(--teal); color: #fff; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-family: 'Unbounded', sans-serif; white-space: nowrap; }
 .draft-tasks { font-size: 13px; line-height: 2; color: var(--dk); }
 .draft-tasks .task-row { display: flex; gap: 0.5rem; padding: 4px 0; border-bottom: 1px solid var(--bg); }
 .draft-tasks .task-row:last-child { border-bottom: none; }
@@ -312,9 +318,8 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--t
     </div>
     <div class="draft-card">
       <div class="draft-label"><span class="field-num">КП</span><h3>Краткий календарный план</h3></div>
-      <div class="draft-hint">Детализируйте: конкретные даты, форматы (очно/онлайн), число участников каждого мероприятия. Лимит: 1000 символов.</div>
-      <div class="draft-txt" id="dt-calendar"></div>
-      <div class="char-counter" id="cc-calendar"></div>
+      <div class="draft-hint">Детализируйте конкретные даты, форматы и число участников перед подачей.</div>
+      <div id="dt-calendar"></div>
     </div>
     <div class="draft-card">
       <div class="draft-label"><span class="field-num">п.14</span><h3>Количественные результаты</h3></div>
@@ -455,7 +460,8 @@ async function generate() {
   }
 
   const used = parseInt(localStorage.getItem('grantai_gens') || '0');
-  if (used >= MAX_GENS) {
+  const isAdmin = ['ignat_k', 'vk.com/ignat_k', 'https://vk.com/ignat_k'].includes(getVK());
+  if (!isAdmin && used >= MAX_GENS) {
     alert(`Вы использовали все ${MAX_GENS} бесплатные генерации.\n\nЧтобы получить больше — напишите автору: vk.com/ignat_k`);
     return;
   }
@@ -468,23 +474,18 @@ async function generate() {
   document.getElementById('gen-btn').disabled = true;
   window.scrollTo(0, 0);
 
-  const msgs = [
-    'Генерируем черновик по методике фонда…',
-    'Анализируем проект по критериям оценки…',
-    'Составляем чек-лист доработки…',
-    'Формируем задачи и календарный план…'
-  ];
+  // Фаза 1: черновик
+  const msgs1 = ['Анализируем проект по критериям фонда…','Формируем черновик заявки…','Прописываем цель, задачи, проблему…','Составляем календарный план…'];
   let li = 0;
-  const itv = setInterval(() => {
-    li = (li + 1) % msgs.length;
-    document.getElementById('load-txt').textContent = msgs[li];
-  }, 1800);
+  const itv = setInterval(() => { li=(li+1)%msgs1.length; document.getElementById('load-txt').textContent=msgs1[li]; }, 1800);
 
   try {
-    const resp = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ ...d, vk: getVK() }) });
-    const json = await resp.json();
-    if (!json.ok) throw new Error(json.error || 'Ошибка сервера');
-    const r = json.data;
+    // ===== ЗАПРОС 1: ЧЕРНОВИК =====
+    document.getElementById('load-txt').textContent = 'Генерируем черновик заявки…';
+    const resp1 = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ ...d, action: 'generate_draft', vk: getVK() }) });
+    const json1 = await resp1.json();
+    if (!json1.ok) throw new Error(json1.error || 'Ошибка сервера');
+    const r = json1.data;
 
     clearInterval(itv);
     localStorage.setItem('grantai_gens', String(used + 1));
@@ -498,7 +499,6 @@ async function generate() {
       { id: 'dt-prob',  cc: 'cc-prob',  val: r.problem,           lim: 1500 },
       { id: 'dt-goal',  cc: 'cc-goal',  val: r.goal,              lim: 400  },
       { id: 'dt-tasks', cc: 'cc-tasks', val: r.tasks,             lim: 1000, isTasks: true },
-      { id: 'dt-calendar', cc: 'cc-calendar', val: r.calendar,    lim: 1000 },
       { id: 'dt-rq',    cc: 'cc-rq',    val: r.results_quantity,  lim: 300  },
       { id: 'dt-rql',   cc: 'cc-rql',   val: r.results_quality,   lim: 500  }
     ];
@@ -525,16 +525,71 @@ async function generate() {
       }
     });
 
+    // Рендер таблицы календарного плана
+    renderCalendar(r.calendar);
+
     document.getElementById('load-card').style.display = 'none';
     document.getElementById('main-sec').style.display = 'block';
 
-    if (r.stages) renderStages(r.stages);
+    // Показываем заглушку чек-листа пока грузится
+    document.getElementById('stages-list').innerHTML = `
+      <div style="background:var(--wh);border:1px solid var(--br);border-radius:var(--rl);padding:2rem;text-align:center">
+        <div class="spinner" style="margin-bottom:0.75rem"></div>
+        <div style="font-size:13px;color:var(--mu)" id="chk-load-txt">Генерируем чек-лист доработки…</div>
+      </div>`;
+
+    const msgs2 = ['Генерируем чек-лист доработки…','Анализируем логику проекта…','Подбираем источники и партнёров…'];
+    let li2 = 0;
+    const itv2 = setInterval(() => { li2=(li2+1)%msgs2.length; const el=document.getElementById('chk-load-txt'); if(el) el.textContent=msgs2[li2]; }, 1800);
+
+    // ===== ЗАПРОС 2: ЧЕК-ЛИСТ =====
+    try {
+      const resp2 = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ ...d, action: 'generate_checklist', draft: r, vk: getVK() }) });
+      const json2 = await resp2.json();
+      clearInterval(itv2);
+      if (json2.ok && json2.data.stages) {
+        renderStages(json2.data.stages);
+      } else {
+        document.getElementById('stages-list').innerHTML = `<div style="color:var(--dng);font-size:13px;padding:1rem">Чек-лист не удалось сгенерировать. Попробуйте обновить страницу.</div>`;
+      }
+    } catch(e2) {
+      clearInterval(itv2);
+      document.getElementById('stages-list').innerHTML = `<div style="color:var(--dng);font-size:13px;padding:1rem">Ошибка чек-листа: ${e2.message}</div>`;
+    }
+
   } catch (e) {
     clearInterval(itv);
     document.getElementById('load-card').innerHTML = `<div style="color:var(--dng);font-size:13px;text-align:center">Ошибка: ${e.message}<br><br><button class="btn btn-p" onclick="backToForm()">← Назад</button></div>`;
   } finally {
     document.getElementById('gen-btn').disabled = false;
   }
+}
+
+function renderCalendar(calendar) {
+  const el = document.getElementById('dt-calendar');
+  if (!el) return;
+  if (!Array.isArray(calendar) || calendar.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--mu)">Календарный план не сгенерирован</div>';
+    return;
+  }
+  el.innerHTML = `<table class="cal-table">
+    <thead><tr>
+      <th>Задача</th>
+      <th>Мероприятие и содержание</th>
+      <th>Место</th>
+      <th>Сроки</th>
+      <th>Ожидаемый результат</th>
+    </tr></thead>
+    <tbody>
+      ${calendar.map(row => `<tr>
+        <td><span class="cal-task-badge">Задача ${row.task || '—'}</span></td>
+        <td>${row.activity || ''}</td>
+        <td>${row.venue || ''}</td>
+        <td style="white-space:nowrap">${row.start || ''}${row.end && row.end !== row.start ? ' — ' + row.end : ''}</td>
+        <td>${row.result || ''}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
 }
 
 function renderStages(stages) {
