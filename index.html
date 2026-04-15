@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600&family=Unbounded:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --teal: #0d6e56; --tl: #1a9070; --tp: #e1f5ee; --td: #0a5240;
@@ -101,6 +100,11 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--t
 .stage-toggle.open { transform: rotate(180deg); }
 .stage-body { padding: 0 1.5rem 1.25rem; border-top: 1px solid var(--bg); }
 .stage-content { font-size: 13px; color: var(--dk); line-height: 1.7; padding-top: 1rem; white-space: pre-wrap; }
+.draft-tasks { font-size: 13px; line-height: 2; color: var(--dk); }
+.draft-tasks .task-row { display: flex; gap: 0.5rem; padding: 4px 0; border-bottom: 1px solid var(--bg); }
+.draft-tasks .task-row:last-child { border-bottom: none; }
+.draft-tasks .task-n { font-family: 'Unbounded', sans-serif; font-size: 10px; background: var(--teal); color: #fff; border-radius: 4px; padding: 2px 7px; flex-shrink: 0; align-self: flex-start; margin-top: 3px; }
+.draft-tasks .task-t { flex: 1; }
 .task-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.625rem 0; border-bottom: 1px solid #f5f5f5; }
 .task-item:last-child { border-bottom: none; }
 .task-cb { width: 20px; height: 20px; border: 2px solid var(--br); border-radius: 5px; cursor: pointer; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
@@ -112,6 +116,19 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--t
 .task-item.checked-item .task-main { text-decoration: line-through; color: var(--mu); }
 .footer { text-align: center; font-size: 11px; color: var(--mu); margin-top: 2rem; line-height: 1.7; }
 .footer a { color: var(--teal); text-decoration: none; }
+@media print {
+  .topbar, #form-page, .res-header, #reg-modal, #reg-status-bar,
+  .load-card, #load-card, .footer, [style*="Написать Кириллу"] { display: none !important; }
+  body { background: #fff; }
+  .wrap { padding: 0; max-width: 100%; }
+  .draft-card { border: 1px solid #ccc; break-inside: avoid; margin-bottom: 8px; padding: 10px; }
+  .stage-card { border: 1px solid #ccc; break-inside: avoid; margin-bottom: 8px; }
+  .stage-body { display: block !important; }
+  #result-page { display: block !important; }
+  #main-sec { display: block !important; }
+  .char-counter { display: none; }
+  .draft-hint { display: none; }
+}
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
 .modal-overlay.open { display: flex; }
 .modal { background: var(--wh); border-radius: var(--rl); padding: 2rem 1.75rem; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
@@ -259,72 +276,63 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--t
   </div>
 
   <div id="main-sec" style="display:none">
-    <!-- Табы -->
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('draft')">Черновик заявки</button>
-      <button class="tab" onclick="switchTab('checklist')">Чек-лист доработки</button>
-    </div>
 
-    <!-- Черновик -->
-    <div id="tab-draft" class="tab-panel active">
-      <div class="draft-card">
-        <div class="draft-label"><span class="field-num">п.3</span><h3>Краткое описание проекта</h3></div>
-        <div class="draft-hint">Публичное поле — именно его увидят эксперты первым. Проверьте на ошибки и точность. Лимит: 600 символов.</div>
-        <div class="draft-txt" id="dt-short"></div>
-        <div class="char-counter" id="cc-short"></div>
-      </div>
-      <div class="draft-card">
-        <div class="draft-label"><span class="field-num">п.6</span><h3>Целевые группы (14–35 лет)</h3></div>
-        <div class="draft-hint">Укажите конкретный возраст, статус, территорию и количество человек. Лимит: 400 символов.</div>
-        <div class="draft-txt" id="dt-tg"></div>
-        <div class="char-counter" id="cc-tg"></div>
-      </div>
-      <div class="draft-card">
-        <div class="draft-label"><span class="field-num">п.7</span><h3>Проблема и социальная значимость</h3></div>
-        <div class="draft-hint">Подкрепите официальной статистикой и результатами опросов перед подачей. Лимит: 1500 символов.</div>
-        <div class="draft-txt" id="dt-prob"></div>
-        <div class="char-counter" id="cc-prob"></div>
-      </div>
-      <div class="draft-card">
-        <div class="draft-label"><span class="field-num">п.9</span><h3>Цель проекта</h3></div>
-        <div class="draft-hint">Проверьте формулу КИЛО: Что + Кого (сколько) + Где + Когда. Лимит: 400 символов.</div>
-        <div class="draft-txt" id="dt-goal"></div>
-        <div class="char-counter" id="cc-goal"></div>
-      </div>
-      <div class="draft-card">
-        <div class="draft-label"><span class="field-num">п.10</span><h3>Задачи проекта</h3></div>
-        <div class="draft-hint">Каждая задача устраняет одну причину проблемы. Минимум 2 мероприятия на задачу. Лимит: 300 символов.</div>
-        <div class="draft-txt" id="dt-tasks"></div>
-        <div class="char-counter" id="cc-tasks"></div>
-      </div>
-      <div class="draft-card">
-        <div class="draft-label"><span class="field-num">КП</span><h3>Краткий календарный план</h3></div>
-        <div class="draft-hint">Детализируйте: конкретные даты, форматы (очно/онлайн), число участников каждого мероприятия. Лимит: 1000 символов.</div>
-        <div class="draft-txt" id="dt-calendar"></div>
-        <div class="char-counter" id="cc-calendar"></div>
-      </div>
-      <div class="draft-card">
-        <div class="draft-label"><span class="field-num">п.14</span><h3>Количественные результаты</h3></div>
-        <div class="draft-hint">Сумма участников всех мероприятий должна совпадать с итоговыми числами. Лимит: 300 символов.</div>
-        <div class="draft-txt" id="dt-rq"></div>
-        <div class="char-counter" id="cc-rq"></div>
-      </div>
-      <div class="draft-card">
-        <div class="draft-label"><span class="field-num">п.15</span><h3>Качественные результаты</h3></div>
-        <div class="draft-hint">Что изменится в жизни участников? Конкретные навыки, знания, социальный эффект. Лимит: 500 символов.</div>
-        <div class="draft-txt" id="dt-rql"></div>
-        <div class="char-counter" id="cc-rql"></div>
-      </div>
+    <!-- Черновик заявки -->
+    <div style="font-family:'Unbounded',sans-serif;font-size:13px;color:var(--teal);font-weight:600;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:2px solid var(--teal)">Черновик заявки</div>
+
+    <div class="draft-card">
+      <div class="draft-label"><span class="field-num">п.3</span><h3>Краткое описание проекта</h3></div>
+      <div class="draft-hint">Публичное поле — именно его увидят эксперты первым. Проверьте на ошибки и точность. Лимит: 600 символов.</div>
+      <div class="draft-txt" id="dt-short"></div>
+      <div class="char-counter" id="cc-short"></div>
+    </div>
+    <div class="draft-card">
+      <div class="draft-label"><span class="field-num">п.6</span><h3>Целевые группы (14–35 лет)</h3></div>
+      <div class="draft-hint">Укажите конкретный возраст, статус, территорию и количество человек. Лимит: 400 символов.</div>
+      <div class="draft-txt" id="dt-tg"></div>
+      <div class="char-counter" id="cc-tg"></div>
+    </div>
+    <div class="draft-card">
+      <div class="draft-label"><span class="field-num">п.7</span><h3>Проблема и социальная значимость</h3></div>
+      <div class="draft-hint">Подкрепите официальной статистикой и результатами опросов перед подачей. Лимит: 1500 символов.</div>
+      <div class="draft-txt" id="dt-prob"></div>
+      <div class="char-counter" id="cc-prob"></div>
+    </div>
+    <div class="draft-card">
+      <div class="draft-label"><span class="field-num">п.9</span><h3>Цель проекта</h3></div>
+      <div class="draft-hint">Проверьте формулу КИЛО: Что + Кого (сколько) + Где + Когда. Лимит: 400 символов.</div>
+      <div class="draft-txt" id="dt-goal"></div>
+      <div class="char-counter" id="cc-goal"></div>
+    </div>
+    <div class="draft-card">
+      <div class="draft-label"><span class="field-num">п.10</span><h3>Задачи проекта</h3></div>
+      <div class="draft-hint">Каждая задача устраняет одну причину проблемы. Минимум 2 мероприятия на задачу. Лимит: 1000 символов.</div>
+      <div id="dt-tasks" class="draft-tasks"></div>
+      <div class="char-counter" id="cc-tasks"></div>
+    </div>
+    <div class="draft-card">
+      <div class="draft-label"><span class="field-num">КП</span><h3>Краткий календарный план</h3></div>
+      <div class="draft-hint">Детализируйте: конкретные даты, форматы (очно/онлайн), число участников каждого мероприятия. Лимит: 1000 символов.</div>
+      <div class="draft-txt" id="dt-calendar"></div>
+      <div class="char-counter" id="cc-calendar"></div>
+    </div>
+    <div class="draft-card">
+      <div class="draft-label"><span class="field-num">п.14</span><h3>Количественные результаты</h3></div>
+      <div class="draft-hint">Сумма участников всех мероприятий должна совпадать с итоговыми числами. Лимит: 300 символов.</div>
+      <div class="draft-txt" id="dt-rq"></div>
+      <div class="char-counter" id="cc-rq"></div>
+    </div>
+    <div class="draft-card">
+      <div class="draft-label"><span class="field-num">п.15</span><h3>Качественные результаты</h3></div>
+      <div class="draft-hint">Что изменится в жизни участников? Конкретные навыки, знания, социальный эффект. Лимит: 500 символов.</div>
+      <div class="draft-txt" id="dt-rql"></div>
+      <div class="char-counter" id="cc-rql"></div>
     </div>
 
     <!-- Чек-лист -->
-    <div id="tab-checklist" class="tab-panel">
-      <div class="stages-header">
-        <h3>Чек-лист доработки заявки</h3>
-        <div class="stage-meta" style="font-size:12px;color:var(--mu)">4 раздела · индивидуально под ваш проект</div>
-      </div>
-      <div id="stages-list"></div>
-    </div>
+    <div style="font-family:'Unbounded',sans-serif;font-size:13px;color:var(--teal);font-weight:600;margin:1.5rem 0 0.75rem;padding-bottom:0.5rem;border-bottom:2px solid var(--teal)">Чек-лист доработки заявки</div>
+    <div style="font-size:12px;color:var(--mu);margin-bottom:1rem">3 раздела · индивидуально под ваш проект</div>
+    <div id="stages-list"></div>
   </div>
 
   <div style="background:var(--tp);border:1px solid var(--tl);border-radius:var(--rl);padding:1.25rem 1.5rem;margin-top:0.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
@@ -432,12 +440,6 @@ function D() {
   };
 }
 
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  event.target.classList.add('active');
-}
 
 async function generate() {
   const d = D();
@@ -495,20 +497,31 @@ async function generate() {
       { id: 'dt-tg',    cc: 'cc-tg',    val: r.target_group,      lim: 400  },
       { id: 'dt-prob',  cc: 'cc-prob',  val: r.problem,           lim: 1500 },
       { id: 'dt-goal',  cc: 'cc-goal',  val: r.goal,              lim: 400  },
-      { id: 'dt-tasks', cc: 'cc-tasks', val: r.tasks,             lim: 300  },
+      { id: 'dt-tasks', cc: 'cc-tasks', val: r.tasks,             lim: 1000, isTasks: true },
       { id: 'dt-calendar', cc: 'cc-calendar', val: r.calendar,    lim: 1000 },
       { id: 'dt-rq',    cc: 'cc-rq',    val: r.results_quantity,  lim: 300  },
       { id: 'dt-rql',   cc: 'cc-rql',   val: r.results_quality,   lim: 500  }
     ];
     fields.forEach(f => {
       const txt = f.val || '';
-      document.getElementById(f.id).textContent = txt;
+      const el = document.getElementById(f.id);
+      if (f.isTasks) {
+        const lines = txt.split('\n').filter(l => l.trim());
+        el.innerHTML = lines.map(l => {
+          const m = l.match(/^(\d+)\.\s*(.+)/);
+          return m
+            ? `<div class="task-row"><span class="task-n">${m[1]}</span><span class="task-t">${m[2]}</span></div>`
+            : `<div class="task-row"><span class="task-t">${l}</span></div>`;
+        }).join('');
+      } else {
+        el.textContent = txt;
+      }
       const n = txt.length;
-      const el = document.getElementById(f.cc);
-      if (el) {
-        el.textContent = n + ' / ' + f.lim + ' символов';
+      const cc = document.getElementById(f.cc);
+      if (cc) {
+        cc.textContent = n + ' / ' + f.lim + ' символов';
         const ratio = n / f.lim;
-        el.className = 'char-counter ' + (n > f.lim ? 'over' : ratio >= 0.85 ? 'ok' : ratio >= 0.6 ? 'warn' : 'over');
+        cc.className = 'char-counter ' + (n > f.lim ? 'over' : ratio >= 0.85 ? 'ok' : ratio >= 0.6 ? 'warn' : 'over');
       }
     });
 
@@ -557,71 +570,9 @@ function toggleStage(si) {
 
 
 function exportPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const d = lastData, M = 20, W = 170;
-  let y = 34;
-
-  doc.setFillColor(13, 110, 86);
-  doc.rect(0, 0, 210, 27, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
-  doc.text('Черновик заявки — Фонд грантов Главы Республики Башкортостан', M, 11);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-  doc.text((d.name || 'Без названия') + (d.geo ? ' · ' + d.geo : ''), M, 20);
-  doc.setTextColor(0, 0, 0);
-
-  const sec = (label, id) => {
-    const tx = document.getElementById(id)?.textContent || '';
-    if (!tx.trim()) return;
-    if (y > 255) { doc.addPage(); y = 20; }
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-    doc.text(label, M, y); y += 6;
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-    doc.splitTextToSize(tx, W).forEach(l => {
-      if (y > 280) { doc.addPage(); y = 20; }
-      doc.text(l, M, y); y += 4.5;
-    });
-    y += 5;
-  };
-
-  sec('п.3 Краткое описание', 'dt-short');
-  sec('п.6 Целевые группы', 'dt-tg');
-  sec('п.7 Проблема и социальная значимость', 'dt-prob');
-  sec('п.9 Цель проекта', 'dt-goal');
-  sec('п.10 Задачи проекта', 'dt-tasks');
-  sec('Краткий календарный план', 'dt-calendar');
-  sec('п.14 Количественные результаты', 'dt-rq');
-  sec('п.15 Качественные результаты', 'dt-rql');
-
-  // Чек-лист доработки
-  const stages = document.querySelectorAll('#stages-list .stage-card');
-  if (stages.length > 0) {
-    doc.addPage(); y = 20;
-    doc.setFillColor(13, 110, 86);
-    doc.rect(0, 0, 210, 14, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-    doc.text('Чек-лист доработки заявки', M, 9);
-    doc.setTextColor(0, 0, 0);
-    y = 24;
-    stages.forEach((card, i) => {
-      const name = card.querySelector('.stage-name')?.textContent || '';
-      const content = card.querySelector('.stage-content')?.textContent || '';
-      if (!content.trim()) return;
-      if (y > 255) { doc.addPage(); y = 20; }
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-      doc.text((i + 1) + '. ' + name, M, y); y += 6;
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-      doc.splitTextToSize(content, W).forEach(l => {
-        if (y > 280) { doc.addPage(); y = 20; }
-        doc.text(l, M, y); y += 4.5;
-      });
-      y += 6;
-    });
-  }
-
-  doc.save('grant-' + (d.name || 'proekt').replace(/\s+/g, '-').toLowerCase().substring(0, 25) + '.pdf');
+  // Раскрываем все этапы чек-листа перед печатью
+  document.querySelectorAll('.stage-body').forEach(b => b.style.display = 'block');
+  window.print();
 }
 
 function backToForm() {
